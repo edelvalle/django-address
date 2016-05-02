@@ -18,7 +18,7 @@ if sys.version > '3':
     basestring = (str, bytes)
     unicode = str
 
-__all__ = ['Country', 'State', 'Locality', 'Address', 'AddressField']
+__all__ = ('Country', 'State', 'Locality', 'Address', 'AddressField')
 
 
 class InconsistentDictError(Exception):

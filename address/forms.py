@@ -15,7 +15,7 @@ if sys.version > '3':
     basestring = (str, bytes)
     unicode = str
 
-__all__ = ['AddressWidget', 'AddressField']
+__all__ = ('AddressWidget', 'AddressField')
 
 
 class AddressWidget(forms.TextInput):
