@@ -1,19 +1,22 @@
+
+import sys
+import logging
+
 from django import forms
-# from uni_form.helpers import *
 from django.utils.safestring import mark_safe
 from .models import Address, to_python
 
-import logging
 logger = logging.getLogger(__name__)
 
 # Python 3 fixes.
-import sys
+
 if sys.version > '3':
     long = int
     basestring = (str, bytes)
     unicode = str
 
 __all__ = ['AddressWidget', 'AddressField']
+
 
 class AddressWidget(forms.TextInput):
     components = [('country', 'country'), ('country_code', 'country_short'),
@@ -26,9 +29,10 @@ class AddressWidget(forms.TextInput):
 
     class Media:
         js = (
-              'https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false',
-              'js/jquery.geocomplete.min.js',
-              'address/js/address.js')
+            'https://maps.googleapis.com/maps/api/js?libraries=places&sensor=false',
+            'js/jquery.geocomplete.min.js',
+            'address/js/address.js'
+        )
 
     def __init__(self, *args, **kwargs):
         attrs = kwargs.get('attrs', {})
@@ -57,11 +61,20 @@ class AddressWidget(forms.TextInput):
         elems = [super(AddressWidget, self).render(name, ad.get('formatted', None), attrs, **kwargs)]
 
         # Now add the hidden fields.
-        elems.append('<div id="%s_components">'%name)
-        for com in self.components:
-            elems.append('<input type="hidden" name="%s_%s" data-geo="%s" value="%s" />'%(
-                name, com[0], com[1], ad.get(com[0], ''))
+        elems.append('<div id="{name}_components">'.format(name=name))
+        for component in self.components:
+            html = """
+                <input
+                    type="hidden"
+                    name="{name}_{component_0}"
+                    data-geo="{component_1}" value="{geodata}"
+                />
+            """.format(
+                name=name, component_0=component[0],
+                component_1=component[1],
+                geodata=ad.get(component[0], '')
             )
+            elems.append(html)
         elems.append('</div>')
 
         return mark_safe(unicode('\n'.join(elems)))
@@ -70,9 +83,10 @@ class AddressWidget(forms.TextInput):
         raw = data.get(name, '')
         if not raw:
             return raw
-        ad = dict([(c[0], data.get(name + '_' + c[0], '')) for c in self.components])
+        ad = {c[0]: data.get(name + '_' + c[0], '') for c in self.components}
         ad['raw'] = raw
         return ad
+
 
 class AddressField(forms.ModelChoiceField):
     widget = AddressWidget

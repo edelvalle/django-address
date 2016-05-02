@@ -1,10 +1,11 @@
 from django.test import TestCase
 from django.forms import ValidationError, Form
 from address.forms import AddressField, AddressWidget
-from address.models import Address
+
 
 class TestForm(Form):
     address = AddressField()
+
 
 class AddressFieldTestCase(TestCase):
 
@@ -47,6 +48,7 @@ class AddressFieldTestCase(TestCase):
     def test_render(self):
         html = self.form.as_table()
         # TODO: Check html
+
 
 class AddressWidgetTestCase(TestCase):
 
