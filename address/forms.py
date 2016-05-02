@@ -58,7 +58,14 @@ class AddressWidget(forms.TextInput):
         # Generate the elements. We should create a suite of hidden fields
         # For each individual component, and a visible field for the raw
         # input. Begin by generating the raw input.
-        elems = [super(AddressWidget, self).render(name, ad.get('formatted', None), attrs, **kwargs)]
+        elems = [
+            super(AddressWidget, self).render(
+                name,
+                ad.get('formatted'),
+                attrs,
+                **kwargs
+            )
+        ]
 
         # Now add the hidden fields.
         elems.append('<div id="{name}_components">'.format(name=name))
@@ -108,8 +115,11 @@ class AddressField(forms.ModelChoiceField):
                     try:
                         value[field] = float(value[field])
                     except:
-                        raise forms.ValidationError('Invalid value for %(field)s', code='invalid',
-                                                    params={'field': field})
+                        raise forms.ValidationError(
+                            'Invalid value for %(field)s',
+                            code='invalid',
+                            params={'field': field}
+                        )
                 else:
                     value[field] = None
 

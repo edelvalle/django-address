@@ -28,8 +28,10 @@ class AddressFieldTestCase(TestCase):
         self.assertEqual(self.field.to_python(''), None)
 
     def test_to_python_invalid_lat_lng(self):
-        self.assertRaises(ValidationError, self.field.to_python, {'latitude': 'x'})
-        self.assertRaises(ValidationError, self.field.to_python, {'longitude': 'x'})
+        self.assertRaises(
+            ValidationError, self.field.to_python, {'latitude': 'x'})
+        self.assertRaises(
+            ValidationError, self.field.to_python, {'longitude': 'x'})
 
     def test_to_python_invalid_empty_lat_lng(self):
         self.assertEqual(self.field.to_python({'latitude': ''}), None)
