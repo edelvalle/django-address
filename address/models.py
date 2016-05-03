@@ -5,10 +5,13 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from django.db.models.fields.related import ForeignObject
 try:
-    from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
+    # Django 1.9
+    from django.db.models.fields.related_descriptors import \
+        ForwardManyToOneDescriptor
 except ImportError:
-    print('Import ERROR')
-    from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor
+    # Old Django
+    from django.db.models.fields.related import \
+        ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor
 from django.utils.encoding import python_2_unicode_compatible
 
 logger = logging.getLogger(__name__)
@@ -123,8 +126,8 @@ def to_python(value):
     if isinstance(value, Address):
         return value
 
-    # If we have an integer, assume it is a model primary key. This is mostly for
-    # Django being a cunt.
+    # If we have an integer, assume it is a model primary key.
+    # This is mostly for Django being a cunt.
     elif isinstance(value, (int, long)):
         return value
 
@@ -307,7 +310,9 @@ class AddressField(models.ForeignKey):
         super(AddressField, self).__init__(**kwargs)
 
     def contribute_to_class(self, cls, name, virtual_only=False):
-        super(ForeignObject, self).contribute_to_class(cls, name, virtual_only=virtual_only)
+        super(ForeignObject, self).contribute_to_class(
+            cls, name, virtual_only=virtual_only
+        )
         setattr(cls, self.name, AddressDescriptor(self))
 
     def formfield(self, **kwargs):
