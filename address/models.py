@@ -7,6 +7,7 @@ from django.db.models.fields.related import ForeignObject
 try:
     from django.db.models.fields.related_descriptors import ForwardManyToOneDescriptor
 except ImportError:
+    print('Import ERROR')
     from django.db.models.fields.related import ReverseSingleRelatedObjectDescriptor as ForwardManyToOneDescriptor
 from django.utils.encoding import python_2_unicode_compatible
 
@@ -48,41 +49,34 @@ def _to_python(value):
         raise InconsistentDictError
 
     # Handle the country.
-    try:
-        country_obj = Country.objects.get(name=country)
-    except Country.DoesNotExist:
-        if country:
-            if len(country_code) > Country._meta.get_field('code').max_length:
-                if country_code != country:
-                    msg = 'Invalid country code (too long): %s'
-                    raise ValueError(msg % country_code)
-                country_code = ''
-            country_obj = Country.objects.create(name=country, code=country_code)
-        else:
-            country_obj = None
+
+    if country:
+        country_obj, created = Country.objects.get_or_create(
+            code=country_code, defaults={'name': country}
+        )
+        if not created:
+            country_obj.name = country
+            country_obj.save()
+    else:
+        country_obj = None
 
     # Handle the state.
-    try:
-        state_obj = State.objects.get(name=state, country=country_obj)
-    except State.DoesNotExist:
-        if state:
-            if len(state_code) > State._meta.get_field('code').max_length:
-                if state_code != state:
-                    msg = 'Invalid state code (too long): %s'
-                    raise ValueError(msg % state_code)
-                state_code = ''
-            state_obj = State.objects.create(name=state, code=state_code, country=country_obj)
-        else:
-            state_obj = None
+    if state:
+        state_obj, created = State.objects.get_or_create(
+            name=state, country=country_obj, defaults={'code': state_code}
+        )
+    else:
+        state_obj = None
 
     # Handle the locality.
-    try:
-        locality_obj = Locality.objects.get(name=locality, state=state_obj)
-    except Locality.DoesNotExist:
-        if locality:
-            locality_obj = Locality.objects.create(name=locality, postal_code=postal_code, state=state_obj)
-        else:
-            locality_obj = None
+    if locality:
+        locality_obj, created = Locality.objects.get_or_create(
+            name=locality,
+            state=state_obj,
+            postal_code=postal_code,
+        )
+    else:
+        locality_obj = None
 
     # Handle the address.
     try:
@@ -106,8 +100,7 @@ def _to_python(value):
         )
 
         # If "formatted" is empty try to construct it from other values.
-        if not address_obj.formatted:
-            address_obj.formatted = unicode(address_obj)
+        address_obj.formatted = address_obj.formatted or unicode(address_obj)
 
         # Need to save.
         address_obj.save()
@@ -162,7 +155,7 @@ def to_python(value):
 class Country(models.Model):
     name = models.CharField(max_length=40, unique=True, blank=True)
     # not unique as there are duplicates (IT)
-    code = models.CharField(max_length=2, blank=True)
+    code = models.CharField(max_length=32, blank=True, db_index=True)
 
     class Meta:
         verbose_name_plural = 'Countries'
@@ -178,8 +171,8 @@ class Country(models.Model):
 
 @python_2_unicode_compatible
 class State(models.Model):
-    name = models.CharField(max_length=165, blank=True)
-    code = models.CharField(max_length=3, blank=True)
+    name = models.CharField(max_length=165, blank=True, db_index=True)
+    code = models.CharField(max_length=32, blank=True)
     country = models.ForeignKey(Country, related_name='states')
 
     class Meta:
@@ -204,8 +197,8 @@ class State(models.Model):
 
 @python_2_unicode_compatible
 class Locality(models.Model):
-    name = models.CharField(max_length=165, blank=True)
-    postal_code = models.CharField(max_length=10, blank=True)
+    name = models.CharField(max_length=165, blank=True, db_index=True)
+    postal_code = models.CharField(max_length=10, blank=True, db_index=True)
     state = models.ForeignKey(State, related_name='localities')
 
     class Meta:
@@ -236,15 +229,15 @@ class Locality(models.Model):
 
 @python_2_unicode_compatible
 class Address(models.Model):
-    street_number = models.CharField(max_length=20, blank=True)
-    route = models.CharField(max_length=100, blank=True)
+    street_number = models.CharField(max_length=20, blank=True, db_index=True)
+    route = models.CharField(max_length=100, blank=True, db_index=True)
     locality = models.ForeignKey(
         Locality,
         related_name='addresses',
         blank=True, null=True
     )
-    raw = models.CharField(max_length=200)
-    formatted = models.CharField(max_length=200, blank=True)
+    raw = models.CharField(max_length=200, db_index=True)
+    formatted = models.CharField(max_length=200, blank=True, db_index=True)
     latitude = models.FloatField(blank=True, null=True)
     longitude = models.FloatField(blank=True, null=True)
 

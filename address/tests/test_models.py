@@ -320,7 +320,7 @@ class AddressFieldTestCase(TestCase):
             'locality': 'Northcote',
             'state': 'Victoria',
             'country': 'Australia',
-            'country_code': 'Australia',
+            'country_code': 'AU',
         }
         self.test.address = to_python(ad)
         self.assertEqual(self.test.address.raw, ad['raw'])
@@ -330,7 +330,7 @@ class AddressFieldTestCase(TestCase):
         self.assertEqual(self.test.address.locality.state.name, 'Victoria')
         self.assertEqual(
             self.test.address.locality.state.country.name, 'Australia')
-        self.assertEqual(self.test.address.locality.state.country.code, '')
+        self.assertEqual(self.test.address.locality.state.country.code, 'AU')
 
     def test_assignment_from_dict_duplicate_state_code(self):
         ad = {
@@ -348,33 +348,9 @@ class AddressFieldTestCase(TestCase):
         self.assertEqual(self.test.address.route, 'Somewhere Street')
         self.assertEqual(self.test.address.locality.name, 'Northcote')
         self.assertEqual(self.test.address.locality.state.name, 'Victoria')
-        self.assertEqual(self.test.address.locality.state.code, '')
+        self.assertEqual(self.test.address.locality.state.code, 'Victoria')
         self.assertEqual(
             self.test.address.locality.state.country.name, 'Australia')
-
-    def test_assignment_from_dict_invalid_country_code(self):
-        ad = {
-            'raw': '1 Somewhere Street, Northcote, Victoria 3070, VIC, AU',
-            'street_number': '1',
-            'route': 'Somewhere Street',
-            'locality': 'Northcote',
-            'state': 'Victoria',
-            'country': 'Australia',
-            'country_code': 'Something else',
-        }
-        self.assertRaises(ValueError, to_python, ad)
-
-    def test_assignment_from_dict_invalid_state_code(self):
-        ad = {
-            'raw': '1 Somewhere Street, Northcote, Victoria 3070, VIC, AU',
-            'street_number': '1',
-            'route': 'Somewhere Street',
-            'locality': 'Northcote',
-            'state': 'Victoria',
-            'state_code': 'Something else',
-            'country': 'Australia',
-        }
-        self.assertRaises(ValueError, to_python, ad)
 
     def test_assignment_from_string(self):
         self.test.address = to_python(self.ad1_dict['raw'])
